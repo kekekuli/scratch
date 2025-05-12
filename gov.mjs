@@ -5,7 +5,7 @@ import fs from "node:fs"
 const USER_ACCOUNT = "";
 const USER_PASSWORD = "";
 
-const MAX_TOTAL_COUNT = 5;
+const MAX_TOTAL_DOWNLOAD_COUNT = 999;
 
 const targetId = "treeZhiBiao";
 
@@ -112,7 +112,7 @@ const targetId = "treeZhiBiao";
     let currDownloaded = 0;
 
     const processNodeTree = async (node, pwd) => {
-        if (currDownloaded >= MAX_TOTAL_COUNT) return;
+        if (currDownloaded >= MAX_TOTAL_DOWNLOAD_COUNT) return;
         if (!node) return;
 
         const newPwd = path.resolve(pwd, node.title);
@@ -139,7 +139,8 @@ const targetId = "treeZhiBiao";
                 console.log("Try to download file of ", node.title)
                 window.download(true, "excel", "table_main");
 
-                await new Promise((resolve=>{setTimeout(resolve, 1000)}));
+                // Wait more time to avoid been detected and blocked
+                await new Promise((resolve=>{setTimeout(resolve, 3000)}));
             }, node);
 
             const downloadTempFile = path.resolve(pwd, "月度数据.xls");
