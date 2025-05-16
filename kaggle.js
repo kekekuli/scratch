@@ -29,6 +29,10 @@ const BATCH_PAUSE_INTERVAL = 30 * 1000; // 等待30秒
   }
 
   async function fetchLicense(url) {
+    if (!url) {
+      console.error("Invalid URL");
+      return "Invalid URL";
+    }
     const page = await browser.newPage();
     try {
       await page.goto(url, { waitUntil: "load", timeout: 0 });
