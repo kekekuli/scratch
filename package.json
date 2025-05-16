@@ -1,8 +1,10 @@
 {
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "start:kaggle": "node transform.js && node kaggle.js --save"
   },
   "dependencies": {
     "puppeteer": "^24.8.2"
-  }
+  },
+  "type": "module"
 }
