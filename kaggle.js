@@ -4,18 +4,17 @@ import fs from "fs";
 import urls from "./kaggleURL.js";
 
 const shouldSave = process.argv.includes("--save");
-const filterURL = urls.filter((url) => url.includes("kaggle.com"));
 
 const concurrency = 8;
 const BATCH_PAUSE_STEP = 10;
 const BATCH_PAUSE_INTERVAL = 30 * 1000; // 等待30秒
 
 (async () => {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({});
   const start = performance.now();
 
   let completed = 0;
-  const total = filterURL.length;
+  const total = urls.length;
 
   function printProgress(completed, total) {
     const percent = ((completed / total) * 100).toFixed(1);
@@ -29,12 +28,10 @@ const BATCH_PAUSE_INTERVAL = 30 * 1000; // 等待30秒
   }
 
   async function fetchLicense(url) {
-    if (!url) {
-      console.error("Invalid URL");
-      return "Invalid URL";
-    }
     const page = await browser.newPage();
     try {
+      if (!url.includes("kaggle.com"))
+        throw new Error("URL does not contain 'kaggle.com'");
       await page.goto(url, { waitUntil: "load", timeout: 0 });
       await page.waitForSelector("h2", { timeout: 0 });
 
@@ -66,8 +63,8 @@ const BATCH_PAUSE_INTERVAL = 30 * 1000; // 等待30秒
 
   const results = [];
 
-  for (let i = 0; i < filterURL.length; i += concurrency) {
-    const chunk = filterURL.slice(i, i + concurrency);
+  for (let i = 0; i < urls.length; i += concurrency) {
+    const chunk = urls.slice(i, i + concurrency);
     const chunkResults = await Promise.all(chunk.map(fetchLicense));
     results.push(...chunkResults);
 
