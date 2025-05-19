@@ -4,7 +4,8 @@
     "start:kaggle": "node transform.js && node kaggle.js --save"
   },
   "dependencies": {
-    "puppeteer": "^24.8.2"
+    "puppeteer": "^24.8.2",
+    "yargs": "^17.7.2"
   },
   "type": "module"
 }

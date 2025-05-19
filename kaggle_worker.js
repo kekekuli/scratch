@@ -1,9 +1,30 @@
 import puppeteer from "puppeteer";
 import { performance } from "perf_hooks";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import path from "path";
+import {pathToFileURL} from "url";
 import fs from "fs";
-import urls from "./kaggleURL.js";
 
-const shouldSave = process.argv.includes("--save");
+const argv = yargs(hideBin(process.argv))
+  .option("file", {
+    alias: "f",
+    type: "string",
+    demandOption: true,
+    describe: "Input file path",
+  })
+  .option("save", {
+    alias: "s",
+    type: "boolean",
+    default: false,
+    describe: "Whether to save the result to disk",
+  })
+  .parse(); 
+
+const filePath = path.resolve(argv.file);
+const {default: urls} = await import(pathToFileURL(filePath).href);
+
+const shouldSave = argv.save;
 
 const concurrency = 8;
 const BATCH_PAUSE_STEP = 10;
@@ -33,7 +54,7 @@ const BATCH_PAUSE_INTERVAL = 30 * 1000; // 30 秒
       if (!url.includes("kaggle.com"))
         throw new Error("URL does not contain 'kaggle.com'");
       await page.goto(url, { waitUntil: "load", timeout: 0 });
-      await page.waitForSelector('span[aria-label="Download"]', { timeout: 300 });
+      await page.waitForSelector('span[aria-label="Download"]', { timeout: 0 });
 
       const nestedPText = await page.evaluate(() => {
         const spans = Array.from(document.querySelectorAll('span[aria-label="Download"]'));
@@ -75,7 +96,7 @@ const BATCH_PAUSE_INTERVAL = 30 * 1000; // 30 秒
 
   console.log();
 
-  results = results.map(item => item.replace(/\s*\([^()]*\)\s*$/, ""));
+  results = results.map(item => item.replace(/\(.*\)/, ""));
 
   if (shouldSave) {
     fs.writeFileSync("license-results.json", JSON.stringify(results, null, 2));
