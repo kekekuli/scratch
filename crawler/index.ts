@@ -1,15 +1,16 @@
-import puppeteer from 'puppeteer';
+import puppeteer, { Page } from 'puppeteer';
 const targetId = "treeZhiBiao";
 
-const sleep = async (delay) => new Promise((resolve) => { setTimeout(resolve, delay) });
-function getTitleBeforeBracket(title) {
+const sleep = async (delay:number) => new Promise((resolve) => { setTimeout(resolve, delay) });
+
+function getTitleBeforeBracket(title:string) {
     return title.split(/（|\(/)[0].trim();
 }
 
-function transformTable({tHead, tBody}) {
-    const result = [];
+function transformTable({tHead, tBody} : RawTable): NamedTimeline[] {
+    const result: NamedTimeline[] = [];
     for (const row of tBody) {
-        const rowData = {};
+        const rowData: { [key: string]: any } = {};
         row.forEach((cell, index) => {
             // skip first column
             if (index === 0) return;
@@ -24,19 +25,31 @@ function transformTable({tHead, tBody}) {
     return result;
 }
 
-async function readTableData(page) {
+async function readTableData(page : Page): Promise<NamedTimeline[]> {
     return transformTable(await page.evaluate(() => {
         const table = document.querySelector("#table_main");
-        const thElements = table.querySelector("thead").querySelectorAll("th");
+        if (!table) {
+            console.warn("Table with id 'table_main' not found.");
+            return { tHead: [], tBody: [] };
+        }
+        const thElements = table.querySelector("thead")?.querySelectorAll("th");
+        if (!thElements) {
+            console.warn("Table header not found.");
+            return { tHead: [], tBody: [] };
+        }
 
-        const tHeadTexts = Array.from(thElements).map(th => {
-            const strong = th.querySelector("strong");
-            if (strong)
-                return strong.innerText.trim();
-            return th.innerText.trim() ? strong.innerText.trim() : '--';
-        })
+        const tHeadTexts = Array.from(thElements).map((th) => {
+          const strong = th.querySelector("strong");
+          if (strong !== null) return strong.innerText.trim();
+          return th.innerText.trim() ? th.innerText.trim() : "--";
+        });
 
-        const tRows = table.querySelector("tbody").querySelectorAll("tr");
+        const tRows = table.querySelector("tbody")?.querySelectorAll("tr");
+        if (!tRows) {
+            console.warn("Table body not found.");
+            return { tHead: tHeadTexts, tBody: [] };
+        }
+
         const tBodyData = Array.from(tRows).map(tr => {
             const tds = tr.querySelectorAll("td");
             const tdTexts = Array.from(tds).map(td => {
@@ -52,12 +65,12 @@ async function readTableData(page) {
     }));
 }
 
-async function getListTree(page, selector) {
+async function getListTree(page: Page, selector: Selector) {
     return await page.evaluate((selector) => {
         const rootUl = document.querySelector(selector);
 
-        const walk = (ul) => {
-            const result = [];
+        const walk = (ul: Element) => {
+            const result: TreeNode[] = [];
 
             const liNodes = ul.querySelectorAll(':scope > li');
 
@@ -74,7 +87,7 @@ async function getListTree(page, selector) {
                 const buttonIcoId = id + '_ico';
                 const hrefId = id + '_a';
 
-                const node = {
+                const node: TreeNode = {
                     id,
                     title,
                     children: childUl ? walk(childUl) : [],
@@ -87,12 +100,16 @@ async function getListTree(page, selector) {
 
             return result;
         };
+        if (!rootUl) {
+            console.warn(`Element with selector ${selector} not found.`);
+            return [];
+        }   
 
         return walk(rootUl);
     }, selector);
 }
 
-async function expandSections(page) {
+async function expandSections(page: Page) {
     const clickedSet = new Set();
 
     console.log("Start to auto click");
@@ -100,9 +117,9 @@ async function expandSections(page) {
         console.log("One round");
 
         const newClicked = await page.evaluate(async (clicked) => {
-            const newClicked = [];
+            const newClicked: string[] = [];
 
-            const buttons = document.querySelectorAll('[id$="_ico"].ico_close');
+            const buttons = document.querySelectorAll('[id$="_ico"].ico_close') as NodeListOf<HTMLElement>;
 
             buttons.forEach(btn => {
                 const id = btn.id;
@@ -128,17 +145,15 @@ async function expandSections(page) {
     console.log("These buttons have been clicked: ", clickedSet);
 }
 
-const getLeafNodes = (nodes) => {
-    return nodes.flatMap(node => 
-        node.children.length === 0 
-            ? [node] 
-            : getLeafNodes(node.children)
-    );
+const getLeafNodes = (entireTree: TreeNode[]): TreeNode[] => {
+  return entireTree.flatMap((node) =>
+    node.children.length === 0 ? [node] : getLeafNodes(node.children)
+  );
 };
 
-async function clickItem(page,selector) {
+async function clickItem(page:Page,selector:Selector) {
     await page.evaluate((selector) => {
-        const element = document.querySelector(selector);
+        const element = document.querySelector(selector) as HTMLElement;
         if (element) {
             element.click();
         }
@@ -148,7 +163,7 @@ async function clickItem(page,selector) {
     }, selector);
 }
 
-const filterSamePrefix = (nodes, getPrefixFn) => {
+const filterSamePrefix = (nodes: TreeNode[], getPrefixFn: (title: string) => string) => {
     const prefixSet = new Set();
     return nodes.filter(node => {
         const prefix = getPrefixFn(node.title);
@@ -161,6 +176,8 @@ const filterSamePrefix = (nodes, getPrefixFn) => {
 }
 
 (async () => {
+    console.log("Start to crawl data from https://data.stats.gov.cn/easyquery.htm?cn=A01");
+
     const browser = await puppeteer.launch({
     });
 

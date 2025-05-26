@@ -2,3 +2,8 @@ node_modules
 package-lock.json
 license-results.json
 kaggleURL.js
+
+**/dist
+**/build
+
+*.tsbuildinfo
