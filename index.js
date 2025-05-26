@@ -6,8 +6,26 @@ function getTitleBeforeBracket(title) {
     return title.split(/（|\(/)[0].trim();
 }
 
+function transformTable({tHead, tBody}) {
+    const result = [];
+    for (const row of tBody) {
+        const rowData = {};
+        row.forEach((cell, index) => {
+            // skip first column
+            if (index === 0) return;
+            rowData[tHead[index]] = cell;
+        });
+
+        result.push({
+            name: row[0],
+            timeline: rowData 
+        });
+    }
+    return result;
+}
+
 async function readTableData(page) {
-    return await page.evaluate(() => {
+    return transformTable(await page.evaluate(() => {
         const table = document.querySelector("#table_main");
         const thElements = table.querySelector("thead").querySelectorAll("th");
 
@@ -28,11 +46,10 @@ async function readTableData(page) {
         })
 
         return {
-            thead: tHeadTexts,
+            tHead: tHeadTexts,
             tBody: tBodyData
         }
-
-    });
+    }));
 }
 
 async function getListTree(page, selector) {
@@ -119,6 +136,18 @@ const getLeafNodes = (nodes) => {
     );
 };
 
+async function clickItem(page,selector) {
+    await page.evaluate((selector) => {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.click();
+        }
+        else{
+            console.warn(`Element with selector ${selector} not found.`);
+        }
+    }, selector);
+}
+
 const filterSamePrefix = (nodes, getPrefixFn) => {
     const prefixSet = new Set();
     return nodes.filter(node => {
@@ -150,4 +179,24 @@ const filterSamePrefix = (nodes, getPrefixFn) => {
     let filteredLeafNodes = filterSamePrefix(leafNodes, getTitleBeforeBracket);
 
     console.log("Filtered leaf nodes: ", filteredLeafNodes);
+
+    let tableDatas = [];
+    let MAX_COUNT = 10;
+    let count = 0;
+
+    for (const node of filteredLeafNodes) {
+        const hrefSelector = node.hrefId;
+        await clickItem(page, `#${hrefSelector}`);
+        await page.waitForNetworkIdle();
+        tableDatas.push({
+          group: node.title,
+          data: await readTableData(page),
+        });
+        count++;
+        if (count >= MAX_COUNT) {
+            break;
+        }
+    }
+    console.log("Table data collected: ", tableDatas);
+
 })()
