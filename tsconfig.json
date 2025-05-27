@@ -1,7 +1,7 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/crawler" },
-    { "path": "./packages/database" }
+    { "path": "./crawler" },
+    { "path": "./database" }
   ]
 }

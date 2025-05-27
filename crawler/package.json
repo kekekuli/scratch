@@ -1,11 +1,14 @@
 {
   "scripts": {
-    "build": "tsc --build",
+    "build": "node esbuild.config.js",
     "run": "npm run build && node dist/index.js"
   },
   "dependencies": {
     "puppeteer": "^24.8.2",
     "yargs": "^17.7.2"
   },
-  "type": "module"
+  "devDependencies": {
+    "esbuild": "^0.25.5",
+    "esbuild-node-externals": "^1.18.0"
+  }
 }
