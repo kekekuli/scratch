@@ -11,13 +11,19 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
     const data = await prisma.indicatorValue.findMany({
-        include:{
+        include: {
             indicator: true,
             date: true
         }
-    })
+    });
 
-    res.json(data);
+    const result = data.map(item => ({
+        name: item.indicator.name,
+        date: dayjs(item.date.date).tz("Asia/Shanghai").format("YYYY-MM"),
+        value: String(item.value)
+    }));
+
+    res.json(result);
 });
 
 router.post("/addRecord", async (req, res) => {
