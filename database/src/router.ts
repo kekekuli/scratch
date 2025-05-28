@@ -1,5 +1,11 @@
 import express from "express";
 import prisma from './clients'
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const router = express.Router();
 
@@ -29,7 +35,7 @@ router.post("/addRecord", async (req, res) => {
             create: { name: indicatorName }
         })
 
-        const parsedDate = new Date(`${date}/01`);
+        const parsedDate = dayjs.tz(`${date}/01`, "Asia/Shanghai").toDate();
 
         if (isNaN(parsedDate.getTime())) {
             res.status(400).json({ error: "Invalid date format" });

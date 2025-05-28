@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.8.2",
+    "dayjs": "^1.11.13",
     "express": "^5.1.0",
     "prisma": "^6.8.2",
     "sqlite3": "^5.1.7"
@@ -25,7 +26,6 @@
     "supertest": "^7.1.1",
     "ts-jest": "^29.3.4"
   },
-  "type": "module",
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node"

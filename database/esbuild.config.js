@@ -6,7 +6,7 @@ await build({
   bundle: true,
   outdir: "dist",
   platform: "node",
-  format: "esm",
+  format: "cjs",
   plugins: [nodeExternalsPlugin()],
   minify: true,
 });
