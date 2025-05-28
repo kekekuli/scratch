@@ -9,4 +9,5 @@ await build({
   format: "esm",
   plugins: [nodeExternalsPlugin()],
   minify: true,
+  sourcemap: true,
 });

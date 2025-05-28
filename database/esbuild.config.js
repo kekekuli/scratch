@@ -9,4 +9,5 @@ await build({
   format: "cjs",
   plugins: [nodeExternalsPlugin()],
   minify: true,
+  sourcemap: true,
 });

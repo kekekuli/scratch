@@ -1,7 +1,53 @@
 import puppeteer, { Page } from 'puppeteer';
+import cliProgress from 'cli-progress';
+
 const targetId = "treeZhiBiao";
 
 const sleep = async (delay:number) => new Promise((resolve) => { setTimeout(resolve, delay) });
+
+
+
+async function uploadAll(tableDatas: IndicatorGroup[]) {
+    let total = 0;
+    tableDatas.forEach(group => {
+        group.data.forEach(item => {
+            total += Object.keys(item.timeline).length;
+        });
+    });
+
+    const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+    bar.start(total, 0);
+
+    let count = 0;
+   for (const group of tableDatas) {
+        for (const item of group.data) {
+            const indicator = item.name;
+            for (const [date, value] of Object.entries(item.timeline)) {
+                // Format date like "2024年5月" to "2024-05"
+                const match = date.match(/^(\d{4})年(\d{1,2})月$/);
+                const formattedDate = match ? `${match[1]}-${match[2].padStart(2, "0")}` : date;
+
+                try {
+                    await fetch("http://localhost:5000/addRecord", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            indicator,
+                            date: formattedDate,
+                            value: Number(value)
+                        })
+                    });
+                } catch (err) {
+                    console.error(`Upload error: ${indicator} ${formattedDate} ${value}`, err);
+                }
+                count++;
+                bar.update(count);
+            }
+        }
+    }
+    bar.stop();
+    console.log("All data uploaded successfully.");
+}
 
 function getTitleBeforeBracket(title:string) {
     return title.split(/（|\(/)[0].trim();
@@ -197,7 +243,7 @@ const filterSamePrefix = (nodes: TreeNode[], getPrefixFn: (title: string) => str
 
     console.log("Filtered leaf nodes: ", filteredLeafNodes);
 
-    let tableDatas = [];
+    let tableDatas:IndicatorGroup[] = [];
     let MAX_COUNT = 10;
     let count = 0;
 
@@ -214,6 +260,7 @@ const filterSamePrefix = (nodes: TreeNode[], getPrefixFn: (title: string) => str
             break;
         }
     }
-    console.log("Table data collected: ", tableDatas);
 
+    await uploadAll(tableDatas);
+    await browser.close();
 })()

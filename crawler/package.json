@@ -1,13 +1,15 @@
 {
   "scripts": {
     "build": "node esbuild.config.js",
-    "run": "npm run build && node dist/index.js"
+    "start": "npm run build && node dist/index.js"
   },
   "dependencies": {
+    "cli-progress": "^3.12.0",
     "puppeteer": "^24.8.2",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@types/cli-progress": "^3.11.6",
     "esbuild": "^0.25.5",
     "esbuild-node-externals": "^1.18.0"
   }

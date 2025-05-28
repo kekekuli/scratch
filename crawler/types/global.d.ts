@@ -17,3 +17,8 @@ interface TreeNode {
     buttonIcoId: string;
     hrefId: string;
 }
+
+interface IndicatorGroup{
+    group: string;
+    data: NamedTimeline[]
+}

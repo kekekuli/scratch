@@ -12,5 +12,8 @@
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",
     "@tsconfig/recommended": "^1.0.8"
+  },
+  "dependencies": {
+    "cli-progress": "^3.12.0"
   }
 }
