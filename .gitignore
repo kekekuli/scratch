@@ -7,5 +7,3 @@ kaggleURL.js
 **/build
 
 *.tsbuildinfo
-
-*.db
